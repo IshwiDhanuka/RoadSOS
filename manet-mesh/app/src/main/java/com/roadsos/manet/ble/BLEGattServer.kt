@@ -1,5 +1,6 @@
 package com.roadsos.manet.ble
 
+import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
@@ -9,6 +10,7 @@ import android.os.ParcelUuid
 import com.roadsos.manet.crypto.SOSPacket
 import java.util.UUID
 
+@SuppressLint("MissingPermission")
 class BLEGattServer(private val context: Context) {
 
     companion object {
@@ -60,7 +62,8 @@ class BLEGattServer(private val context: Context) {
             .setIncludeDeviceName(false)
             .build()
 
-        bluetoothManager.adapter.bluetoothLeAdvertiser?.startAdvertising(settings, data, advertiseCallback)
+        bluetoothManager.adapter.bluetoothLeAdvertiser
+            ?.startAdvertising(settings, data, advertiseCallback)
     }
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
