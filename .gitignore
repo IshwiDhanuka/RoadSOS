@@ -3,3 +3,8 @@ manet-mesh/.idea/
 manet-mesh/app/build/
 manet-mesh/.gradle/
 *.pem
+node_modules/
+dist/
+*.env
+coverage/
+*.log
