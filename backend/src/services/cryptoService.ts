@@ -3,21 +3,16 @@ import { getEnv } from '../config/env';
 import type { EncryptedLocation, SOSPacket, RelayHop } from '../interfaces';
 
 export function buildSignedPayload(packet: SOSPacket): string {
-  /** Constructs the canonical string that the sender device signs with ECDSA-P256:
-   *  `eventId|timestamp|nonce|JSON(locationEnc)`. This exact format must match what
-   *  the mobile client signs so the server can verify the signature. */
   return [
     packet.eventId,
     String(packet.timestamp),
     packet.nonce,
-    JSON.stringify(packet.locationEnc),
+    packet.locationEnc,
   ].join('|');
 }
 
-export function buildRelaySignedPayload(hop: RelayHop, eventId: string): string {
-  /** Constructs the canonical string that a relay node signs: `nodeId|timestamp|eventId`.
-   *  Each hop in the MANET relay chain signs this format with its own ECDSA-P256 key. */
-  return [hop.nodeId, String(hop.timestamp), eventId].join('|');
+export function buildRelaySignedPayload(hop: RelayHop, hopIndex: number, eventId: string): string {
+  return [eventId, String(hopIndex), String(hop.timestamp)].join('|');
 }
 
 export function verifyEcdsaSignature(
@@ -111,12 +106,10 @@ export function verifySosPacketSignature(
 
 export function verifyRelayHopSignature(
   hop: RelayHop,
+  hopIndex: number,
   eventId: string,
   publicKeyPem: string,
 ): boolean {
-  /** Verifies a single relay hop's ECDSA-P256 signature by building the canonical
-   *  relay payload (nodeId|timestamp|eventId) and checking it against the hop node's
-   *  public key from Firestore. Returns true if valid. */
-  const payload = buildRelaySignedPayload(hop, eventId);
+  const payload = buildRelaySignedPayload(hop, hopIndex, eventId);
   return verifyEcdsaSignature(publicKeyPem, payload, hop.signature);
 }
