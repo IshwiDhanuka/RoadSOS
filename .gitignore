@@ -2,3 +2,4 @@
 manet-mesh/.idea/
 manet-mesh/app/build/
 manet-mesh/.gradle/
+*.pem

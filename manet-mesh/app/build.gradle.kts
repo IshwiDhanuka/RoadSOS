@@ -1,24 +1,24 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
+val localProps = Properties()
+localProps.load(FileInputStream(rootProject.file("local.properties")))
 android {
     namespace = "com.roadsos.manet"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
-
+    compileSdk = 35
     defaultConfig {
         applicationId = "com.roadsos.manet"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "SERVER_PUBLIC_KEY", "\"${localProps["SERVER_PUBLIC_KEY"]}\"")
     }
 
     buildTypes {
@@ -30,12 +30,15 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -57,7 +60,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("com.google.code.gson:gson:2.10.1")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("commons-codec:commons-codec:1.16.0")
     implementation("commons-codec:commons-codec:1.16.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("com.facebook.react:react-android:0.74.0")
 }
