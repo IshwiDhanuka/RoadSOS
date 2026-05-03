@@ -69,12 +69,16 @@ class CryptoTest {
 
     @Test
     fun sosPacketShouldSerializeAndDeserializeCorrectly() {
+        val encLoc = EncryptedLocation(
+            ciphertext = "encLoc",
+            wrappedKey = "wrappedKey",
+            iv = "iv",
+            authTag = "authTag"
+        )
         val packet = SOSPacket(
             eventId = "evt-001",
             userId = "user-hash-001",
-            locationEnc = "encLoc",
-            encKey = "encKey",
-            iv = "iv",
+            locationEnc = encLoc,
             timestamp = 1234567890L,
             nonce = "abc123",
             signature = "sig"
@@ -82,5 +86,4 @@ class CryptoTest {
         val json = packet.toJson()
         val restored = SOSPacket.fromJson(json)
         assertEquals(packet, restored)
-    }
-}
+    }}

@@ -3,7 +3,6 @@ package com.roadsos.manet.bridge
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Base64
-import com.roadsos.manet.BuildConfig
 import com.roadsos.manet.ble.BLEGattServer
 import com.roadsos.manet.crypto.KeyManager
 import com.roadsos.manet.crypto.LocationEncryptor
@@ -14,11 +13,13 @@ import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
 import java.util.UUID
 
-class MANETModule(private val context: Context) {
+class MANETModule(
+    private val context: Context,
+    private val serverPublicKeyBase64: String
+) {
 
     private val keyManager = KeyManager(context)
 
-    // Builds signed, GPS-encrypted SOSPacket and broadcasts over BLE
     @SuppressLint("HardwareIds")
     fun startMeshSOS(lat: Double, lng: Double): String {
         val keyPair = keyManager.getOrCreateKeyPair()
@@ -30,7 +31,7 @@ class MANETModule(private val context: Context) {
             android.provider.Settings.Secure.ANDROID_ID
         )
 
-        val keyBytes = Base64.decode(BuildConfig.SERVER_PUBLIC_KEY, Base64.DEFAULT)
+        val keyBytes = Base64.decode(serverPublicKeyBase64, Base64.DEFAULT)
         val serverPublicKey = KeyFactory.getInstance("RSA")
             .generatePublic(X509EncodedKeySpec(keyBytes))
 
@@ -43,9 +44,7 @@ class MANETModule(private val context: Context) {
         val packet = SOSPacket(
             eventId = eventId,
             userId = userId,
-            locationEnc = encryptedLocation.ciphertext,
-            encKey = encryptedLocation.encKey,
-            iv = encryptedLocation.iv,
+            locationEnc = encryptedLocation,
             timestamp = timestamp,
             nonce = nonce,
             signature = signature
@@ -55,6 +54,5 @@ class MANETModule(private val context: Context) {
         return eventId
     }
 
-    // Returns device public key as Base64 for Firestore registration
     fun getPublicKey(): String = keyManager.getPublicKeyBase64()
 }
