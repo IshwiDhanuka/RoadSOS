@@ -23,7 +23,7 @@ class RelayManager(private val context: Context) {
         // Drop if signature invalid
         if (!SOSPacketVerifier.verify(
                 packet.eventId, packet.timestamp, packet.nonce,
-                packet.locationEnc, packet.signature, senderPublicKey
+                packet.locationEnc.ciphertext, packet.signature, senderPublicKey
             )) return
 
         // Drop if already seen (replay prevention)
