@@ -13,10 +13,10 @@ object SOSPacketSigner {
         eventId: String,
         timestamp: Long,
         nonce: String,
-        locationEnc: String,
+        locationEncCiphertext: String,
         privateKey: PrivateKey
     ): String {
-        val payload = "$eventId|$timestamp|$nonce|$locationEnc"
+        val payload = "$eventId|$timestamp|$nonce|$locationEncCiphertext"
 
         val signature = Signature.getInstance(ALGORITHM)
         signature.initSign(privateKey)
