@@ -163,7 +163,7 @@ export async function meshRelay(req: Request, res: Response): Promise<void> {
   for (let i = 0; i < packet.relayChain.length; i++) {
     const hop = packet.relayChain[i];
     const hopPubKey = await getDevicePublicKey(hop.nodeId);
-    if (!verifyRelayHopSignature(hop, packet.eventId, hopPubKey)) {
+    if (!verifyRelayHopSignature(hop, i, packet.eventId, hopPubKey)) {
       throw createHttpError(403, `Relay hop #${i} (${hop.nodeId}) signature verification failed`);
     }
   }
