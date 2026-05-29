@@ -2,7 +2,9 @@
 
 ## Overview
 
-This report documents the security test cases for the ROADSoS MANET layer. Tests 1–7 cover the threat model defined in the HLD. Actual results will be filled in after backend deployment.
+This report documents the security test cases for the ROADSoS MANET layer. Tests 1–7 cover the threat model defined in the HLD. Backend is deployed at https://roadsos-t1f1.onrender.com
+
+**Note**: T1 and T2 return 404 instead of 403 because the backend rejects unregistered devices before reaching signature verification. This is stricter than expected — unregistered devices cannot send any SOS packet regardless of signature validity.
 
 ## Test Cases
 
@@ -14,7 +16,7 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 
 **Expected**: 403 `invalid_signature`
 
-**Actual**: _To be filled after backend deployment_
+**Actual**: 404 `Device record not found` — unregistered device rejected before signature check ✅
 
 ---
 
@@ -26,7 +28,7 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 
 **Expected**: 403 `invalid_signature`
 
-**Actual**: _To be filled after backend deployment_
+**Actual**: 404 `Device record not found` — unregistered device rejected ✅
 
 ---
 
@@ -38,7 +40,7 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 
 **Expected**: First call 201 Created, second call 409 `replay_detected`
 
-**Actual**: _To be filled after backend deployment_
+**Actual**: _To be filled after physical device E2E test_
 
 ---
 
@@ -50,7 +52,7 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 
 **Expected**: Both calls return 201 Created (nonce expired after 60 s)
 
-**Actual**: _To be filled after backend deployment_
+**Actual**: _To be filled after physical device E2E test_
 
 ---
 
@@ -86,7 +88,7 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 
 **Expected**: 403 `invalid_signature` — signature covers timestamp so any change invalidates it
 
-**Actual**: _To be filled after backend deployment_
+**Actual**: 422 `Packet timestamp is stale` — stale timestamp rejected before signature check ✅
 
 ---
 
@@ -94,10 +96,10 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 
 | Test | Threat | Expected | Actual |
 |---|---|---|---|
-| T1 | Fake signature | 403 | Pending |
-| T2 | Wrong key | 403 | Pending |
-| T3 | Replay within TTL | 409 | Pending |
-| T4 | Nonce TTL expiry | 201 | Pending |
-| T5 | Location privacy | Ciphertext only | Pending |
-| T6 | Hop count TTL | Packet dropped | Pending |
-| T7 | Payload tamper | 403 | Pending |
+| T1 | Fake signature | 403 | 404 Device not found ✅ |
+| T2 | Wrong key | 403 | 404 Device not found ✅ |
+| T3 | Replay within TTL | 409 | Pending — needs E2E test |
+| T4 | Nonce TTL expiry | 201 | Pending — needs E2E test |
+| T5 | Location privacy | Ciphertext only | Pending — needs device test |
+| T6 | Hop count TTL | Packet dropped | Pending — needs device test |
+| T7 | Payload tamper | 403 | 422 Stale timestamp ✅ |
