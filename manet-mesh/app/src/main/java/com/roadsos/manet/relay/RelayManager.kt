@@ -15,34 +15,34 @@ import java.net.URL
 
 class RelayManager(private val context: Context) {
 
+    companion object {
+        const val BACKEND_URL = "https://roadsos-t1f1.onrender.com"
+    }
+
     private val keyManager = KeyManager(context)
     private val scope = CoroutineScope(Dispatchers.IO)
 
     // Handles an incoming SOSPacket from BLE — verify, dedup, relay or re-advertise
-    fun handle(packet: SOSPacket, senderPublicKey: String, backendUrl: String) {
-        // Drop if signature invalid
+    fun handle(packet: SOSPacket, senderPublicKey: String) {
         if (!SOSPacketVerifier.verify(
                 packet.eventId, packet.timestamp, packet.nonce,
                 packet.locationEnc.ciphertext, packet.signature, senderPublicKey
             )) return
 
-        // Drop if already seen (replay prevention)
         if (NonceCache.isSeen(packet.nonce)) return
         NonceCache.markSeen(packet.nonce)
 
-        // Drop if TTL exceeded
         if (!HopChainManager.canRelay(packet)) return
 
         scope.launch {
             if (isOnline()) {
-                postToBackend(packet, backendUrl)
+                postToBackend(packet, BACKEND_URL)
             } else {
                 reAdvertise(packet)
             }
         }
     }
 
-    // Checks basic connectivity by attempting a HEAD request
     private fun isOnline(): Boolean {
         return try {
             val url = URL("https://www.google.com")
@@ -55,7 +55,6 @@ class RelayManager(private val context: Context) {
         }
     }
 
-    // Posts verified packet to backend relay endpoint
     private fun postToBackend(packet: SOSPacket, backendUrl: String) {
         try {
             val url = URL("$backendUrl/api/mesh/relay")
@@ -70,7 +69,6 @@ class RelayManager(private val context: Context) {
         }
     }
 
-    // Re-advertises packet via BLE for next relay node to pick up
     private fun reAdvertise(packet: SOSPacket) {
         val keyPair = keyManager.getOrCreateKeyPair()
         val nodeId = android.provider.Settings.Secure.getString(
