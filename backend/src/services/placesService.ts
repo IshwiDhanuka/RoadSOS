@@ -31,9 +31,7 @@ interface PlacesResult {
   displayName?: { text?: string };
   formattedAddress?: string;
   location?: { latitude?: number; longitude?: number };
-  nationalPhoneNumber?: string;
   types?: string[];
-  rating?: number;
 }
 
 function toServiceRecord(place: PlacesResult): ServiceRecord | null {
@@ -51,9 +49,7 @@ function toServiceRecord(place: PlacesResult): ServiceRecord | null {
     lat,
     lng,
     address: place.formattedAddress ?? '',
-    phone: place.nationalPhoneNumber,
     source: 'google',
-    rating: place.rating,
     isVerified: false,
   };
 }
@@ -93,7 +89,7 @@ export async function searchNearby(
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
       'X-Goog-FieldMask':
-        'places.id,places.displayName,places.formattedAddress,places.location,places.nationalPhoneNumber,places.types,places.rating',
+        'places.id,places.displayName,places.formattedAddress,places.location,places.types',
     },
     body: JSON.stringify(body),
   });
@@ -135,7 +131,7 @@ export async function searchText(
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
       'X-Goog-FieldMask':
-        'places.id,places.displayName,places.formattedAddress,places.location,places.nationalPhoneNumber,places.types,places.rating',
+        'places.id,places.displayName,places.formattedAddress,places.location,places.types',
     },
     body: JSON.stringify(body),
   });
