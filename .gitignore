@@ -7,5 +7,7 @@ node_modules/
 dist/
 *.env
 coverage/
-*.log*.pem
+*.log
 .vscode/
+local.properties
+

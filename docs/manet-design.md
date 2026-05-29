@@ -60,18 +60,18 @@ Relay Device (nearby)
 
 ## 5. SOSPacket Schema
 
-```
-eventId     : String   — UUID v4, unique per SOS event
-userId      : String   — SHA-256 of device Android ID
-locationEnc : String   — AES-256-GCM encrypted "lat,lng", base64
-encKey      : String   — AES key wrapped with server RSA-2048-OAEP, base64
-iv          : String   — AES-GCM IV, base64
-timestamp   : Long     — epoch ms
-nonce       : String   — 128-bit SecureRandom hex
-signature   : String   — ECDSA-P256 over "eventId|timestamp|nonce|locationEnc"
-hopCount    : Int      — 0 = origin, max 5
-relayChain  : List     — RelayHop entries appended by each relay node
-```
+eventId     : String          — UUID v4, unique per SOS event
+userId      : String          — SHA-256 of device Android ID
+locationEnc : EncryptedLocation — AES-256-GCM encrypted GPS object
+  ├── ciphertext : String     — base64 AES-GCM ciphertext
+  ├── wrappedKey : String     — base64 AES key wrapped with server RSA-2048-OAEP
+  ├── iv         : String     — base64 AES-GCM IV
+  └── authTag    : String     — base64 AES-GCM auth tag
+timestamp   : Long            — epoch ms
+nonce       : String          — 128-bit SecureRandom hex
+signature   : String          — ECDSA-P256 over "eventId|timestamp|nonce|locationEnc.ciphertext"
+hopCount    : Int             — 0 = origin, max 5
+relayChain  : List<RelayHop>  — appended by each relay node
 
 ## 6. Security Model
 
