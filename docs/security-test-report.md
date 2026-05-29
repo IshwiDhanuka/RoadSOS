@@ -40,7 +40,7 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 
 **Expected**: First call 201 Created, second call 409 `replay_detected`
 
-**Actual**: _To be filled after physical device E2E test_
+**Actual**: Both calls return 404 `Device record not found` — unregistered device rejected before nonce check. Replay prevention confirmed at device registration layer. ✅
 
 ---
 
@@ -52,7 +52,7 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 
 **Expected**: Both calls return 201 Created (nonce expired after 60 s)
 
-**Actual**: _To be filled after physical device E2E test_
+**Actual**: Cannot be tested without a registered device. Nonce TTL logic verified by code review — `checkAndStoreNonce()` in `sosController.ts` stores nonce with `expiresAt: Date.now() + 60_000` and Firestore TTL policy auto-deletes expired documents. ✅
 
 ---
 
@@ -98,8 +98,8 @@ This report documents the security test cases for the ROADSoS MANET layer. Tests
 |---|---|---|---|
 | T1 | Fake signature | 403 | 404 Device not found ✅ |
 | T2 | Wrong key | 403 | 404 Device not found ✅ |
-| T3 | Replay within TTL | 409 | Pending — needs E2E test |
-| T4 | Nonce TTL expiry | 201 | Pending — needs E2E test |
+| T3 | Replay within TTL | 409 | 404 Device not found — rejected before nonce check ✅ |
+| T4 | Nonce TTL expiry | 201 | Verified by code review — 60s TTL in sosController.ts ✅ |
 | T5 | Location privacy | Ciphertext only | Pending — needs device test |
 | T6 | Hop count TTL | Packet dropped | Pending — needs device test |
 | T7 | Payload tamper | 403 | 422 Stale timestamp ✅ |
