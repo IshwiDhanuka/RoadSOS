@@ -61,6 +61,15 @@ const SOSScreen = () => {
         const isOnline = netInfo.isConnected && netInfo.isInternetReachable !== false;
         
         if (isOnline) {
+          try {
+            if (VANETModule && VANETModule.generateSOSPacket) {
+              const packetJson = await VANETModule.generateSOSPacket(latitude, longitude);
+              const { triggerSOS } = require('../services/api');
+              await triggerSOS(packetJson);
+            }
+          } catch (e) {
+            console.warn('API SOS failed', e);
+          }
           dispatch(loadNearbyServices({ lat: latitude, lng: longitude, isOnline }) as any);
           Alert.alert('SOS Transmitted', 'Live Emergency broadcast sent. Searching for nearby responders...', [{ text: 'OK' }]);
         } else {

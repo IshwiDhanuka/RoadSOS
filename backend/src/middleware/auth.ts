@@ -28,6 +28,17 @@ export async function requireAuth(
 
   const idToken = header.slice(7);
 
+  // Hackathon bypass
+  if (idToken === 'hackathon-bypass') {
+    req.user = {
+      uid: 'hackathon_user_123',
+      email: 'tester@roadsos.local',
+    };
+    next();
+    return;
+  }
+
+
   try {
     const decoded = await getAuth().verifyIdToken(idToken, true);
 

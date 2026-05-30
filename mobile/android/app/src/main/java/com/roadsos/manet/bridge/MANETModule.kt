@@ -65,6 +65,43 @@ class MANETModule(
             promise.reject("SOS_ERROR", e.message)
         }
     }
+    @ReactMethod
+    fun generateSOSPacket(lat: Double, lng: Double, promise: Promise) {
+        try {
+            val keyPair = keyManager.getOrCreateKeyPair()
+            val eventId = UUID.randomUUID().toString()
+            val timestamp = System.currentTimeMillis()
+            val nonce = NonceGenerator.generate()
+            val userId = android.provider.Settings.Secure.getString(
+                reactContext.contentResolver,
+                android.provider.Settings.Secure.ANDROID_ID
+            )
+
+            val keyBytes = Base64.decode(serverPublicKeyBase64, Base64.DEFAULT)
+            val serverPublicKey = KeyFactory.getInstance("RSA")
+                .generatePublic(X509EncodedKeySpec(keyBytes))
+            
+            // AES-GCM Encrypt Location and RSA wrap AES Key
+            val encryptedLocation = LocationEncryptor.encrypt(lat, lng, serverPublicKey)
+            
+            // ECDSA P-256 Sign
+            val signature = SOSPacketSigner.sign(eventId, timestamp, nonce, encryptedLocation.ciphertext, keyPair.private)
+
+            val packet = SOSPacket(
+                eventId = eventId,
+                userId = userId,
+                locationEnc = encryptedLocation,
+                timestamp = timestamp,
+                nonce = nonce,
+                signature = signature
+            )
+            
+            val gson = com.google.gson.Gson()
+            promise.resolve(gson.toJson(packet))
+        } catch (e: Exception) {
+            promise.reject("SOS_ERROR", e.message)
+        }
+    }
 
     @ReactMethod
     fun getPublicKey(promise: Promise) {
