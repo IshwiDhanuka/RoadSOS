@@ -15,7 +15,8 @@ export const fetchNearbyServices = async (lat: number, lng: number, radius = 500
 };
 
 export const searchServices = async (q: string, lat: number, lng: number, category?: string, radius = 5000): Promise<ServiceRecord[]> => {
-  const res = await api.get('/services/search', { params: { q, lat, lng, radius, category } });
+  const searchQuery = q || category || 'emergency';
+  const res = await api.get('/services/search', { params: { q: searchQuery, lat, lng, radius, category } });
   return res.data.services || [];
 };
 

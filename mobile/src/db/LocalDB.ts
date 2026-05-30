@@ -70,6 +70,47 @@ class LocalDB {
     }
     return services;
   }
+
+  async searchServices(q: string, lat: number, lng: number, category?: string): Promise<ServiceRecord[]> {
+    if (!this.db) return [];
+    
+    let query = `
+      SELECT *, ((lat - ?) * (lat - ?) + (lng - ?) * (lng - ?)) AS distSquared
+      FROM services
+      WHERE 1=1
+    `;
+    const params: any[] = [lat, lat, lng, lng];
+    
+    if (q) {
+      query += ` AND (name LIKE ? OR category LIKE ?)`;
+      params.push(`%${q}%`, `%${q}%`);
+    }
+    if (category) {
+      query += ` AND category = ?`;
+      params.push(category);
+    }
+    
+    query += ` ORDER BY distSquared ASC LIMIT 20`;
+    
+    const [results] = await this.db.executeSql(query, params);
+    const services: ServiceRecord[] = [];
+    for (let i = 0; i < results.rows.length; i++) {
+      const row = results.rows.item(i);
+      services.push({
+        id: row.id,
+        name: row.name,
+        category: row.category as any,
+        lat: row.lat,
+        lng: row.lng,
+        phone: row.phone ? JSON.parse(row.phone) : [],
+        address: row.address,
+        isVerified: row.isVerified === 1,
+        distanceMeters: Math.sqrt(row.distSquared) * 111000, // rough approx
+        source: 'offline',
+      });
+    }
+    return services;
+  }
 }
 
 export default new LocalDB();

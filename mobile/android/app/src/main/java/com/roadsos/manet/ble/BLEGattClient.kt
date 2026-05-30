@@ -77,7 +77,16 @@ class BLEGattClient(
                     .onSuccess { packet ->
                         onPacketReceived(packet)
                         gatt.disconnect()
+                        // Restart scanning to listen for future packets
+                        startScanning()
                     }
+                    .onFailure { 
+                        gatt.disconnect()
+                        startScanning()
+                    }
+            } else {
+                gatt.disconnect()
+                startScanning()
             }
         }
     }

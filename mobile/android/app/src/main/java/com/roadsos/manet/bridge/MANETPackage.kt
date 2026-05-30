@@ -7,6 +7,7 @@ import com.facebook.react.uimanager.ViewManager
 
 class MANETPackage : ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
+        // Empty string signals MANETModule to skip RSA encryption and use plaintext fallback
         return listOf(MANETModule(reactContext, ""))
     }
 

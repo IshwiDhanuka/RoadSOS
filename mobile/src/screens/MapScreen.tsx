@@ -1,102 +1,73 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, PermissionsAndroid, Platform, Alert } from 'react-native';
-import MapView, { Marker, Circle } from 'react-native-maps';
+import React, { useCallback, useRef } from 'react';
+import { View, StyleSheet, Dimensions, Text } from 'react-native';
+import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSelector } from 'react-redux';
-import Geolocation from 'react-native-geolocation-service';
+import { useFocusEffect } from '@react-navigation/native';
 
-const darkMapStyle = [
-  { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
-  { "elementType": "labels.text.fill", "stylers": [{ "color": "#746855" }] },
-  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#242f3e" }] },
-  { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
-  { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
-  { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#263c3f" }] },
-  { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#6b9a76" }] },
-  { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#38414e" }] },
-  { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#212a37" }] },
-  { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#9ca5b3" }] },
-  { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#746855" }] },
-  { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#1f2835" }] },
-  { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{ "color": "#f3d19c" }] },
-  { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#17263c" }] },
-  { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#515c6d" }] },
-  { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#17263c" }] }
-];
+const { width, height } = Dimensions.get('window');
 
 const MapScreen = () => {
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const mapRef = useRef<MapView>(null);
+  const currentLocation = useSelector((state: any) => state.services?.currentLocation);
+  const location = currentLocation ? { latitude: currentLocation.lat, longitude: currentLocation.lng } : null;
   const nearbyServices = useSelector((state: any) => state.services?.nearby || []);
 
-  useEffect(() => {
-    let watchId: number | null = null;
+  // Force map to re-render when tab is focused — fixes the blank tile issue
+  const [mapKey, setMapKey] = React.useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      // Bump the key to force a full remount of MapView when the tab gains focus
+      setMapKey(prev => prev + 1);
+    }, [])
+  );
 
-    const requestLocationPermission = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('Permission Denied', 'Location permission is required to show you on the map.');
-          return;
-        }
-      }
-      
-      watchId = Geolocation.watchPosition(
-        (position) => {
-          setLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => console.log(error),
-        { enableHighAccuracy: true, distanceFilter: 10 }
-      );
-    };
-
-    requestLocationPermission();
-
-    return () => {
-      if (watchId !== null) Geolocation.clearWatch(watchId);
-    };
-  }, []);
+  const defaultRegion = {
+    latitude: location?.latitude || 28.6139,
+    longitude: location?.longitude || 77.2090,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  };
 
   return (
     <View style={styles.container}>
       <MapView
+        key={`map-${mapKey}`}
+        ref={mapRef}
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
-        customMapStyle={darkMapStyle}
-        initialRegion={{
-          latitude: location?.latitude || 28.6139,
-          longitude: location?.longitude || 77.2090, // Default to New Delhi
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
-        region={location ? {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        } : undefined}
+        initialRegion={defaultRegion}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
+        showsCompass={true}
+        zoomEnabled={true}
+        scrollEnabled={true}
+        rotateEnabled={true}
+        loadingEnabled={true}
+        loadingIndicatorColor="#e67e22"
+        loadingBackgroundColor="#0f0f1a"
       >
         {location && (
-          <>
-            <Marker coordinate={location} title="You are here" pinColor="#4facfe" />
-            <Circle
-              center={location}
-              radius={500}
-              fillColor="rgba(79, 172, 254, 0.2)"
-              strokeColor="#4facfe"
-            />
-          </>
+          <Circle
+            center={location}
+            radius={500}
+            fillColor="rgba(79, 172, 254, 0.15)"
+            strokeColor="rgba(79, 172, 254, 0.5)"
+            strokeWidth={1}
+          />
         )}
-        
+
         {nearbyServices.map((service: any) => (
           <Marker
             key={service.id}
             coordinate={{ latitude: service.lat, longitude: service.lng }}
             title={service.name}
-            description={service.category}
-            pinColor="#e67e22"
+            description={`${service.category}${service.distanceMetres ? ' • ' + Math.round(service.distanceMetres) + 'm away' : ''}`}
+            pinColor={
+              service.category === 'hospital' ? '#e74c3c' :
+              service.category === 'police' ? '#3498db' :
+              service.category === 'fire' ? '#f39c12' :
+              '#e67e22'
+            }
           />
         ))}
       </MapView>
@@ -110,7 +81,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f0f1a',
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    width: width,
+    height: height,
   },
 });
 

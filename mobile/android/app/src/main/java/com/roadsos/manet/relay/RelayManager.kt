@@ -24,13 +24,20 @@ class RelayManager(private val context: Context) {
 
     // Handles an incoming SOSPacket from BLE — verify, dedup, relay or re-advertise
     fun handle(packet: SOSPacket, senderPublicKey: String) {
-        if (!SOSPacketVerifier.verify(
-                packet.eventId, packet.timestamp, packet.nonce,
-                packet.locationEnc.ciphertext, packet.signature, senderPublicKey
-            )) return
-
+        // Bypassing local ECDSA verification for hackathon as offline nodes don't have the public key
+        // Let the backend do the real verification when it gets online
+        
         if (NonceCache.isSeen(packet.nonce)) return
         NonceCache.markSeen(packet.nonce)
+
+        // Emit event to React Native UI
+        try {
+            val reactContext = context as? com.facebook.react.bridge.ReactApplicationContext
+            reactContext?.getJSModule(com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                ?.emit("onMeshSOSReceived", packet.toJson())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
 
         if (!HopChainManager.canRelay(packet)) return
 

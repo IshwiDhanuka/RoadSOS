@@ -8,7 +8,15 @@ import SearchScreen from './screens/SearchScreen';
 import FirstAidScreen from './screens/FirstAidScreen';
 import ReportScreen from './screens/ReportScreen';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, PermissionsAndroid, NativeModules, NativeEventEmitter, Alert } from 'react-native';
+import Geolocation from 'react-native-geolocation-service';
+import { useDispatch } from 'react-redux';
+import { setCurrentLocation } from './store/servicesSlice';
+import LocalDB from './db/LocalDB';
+import { Buffer } from 'buffer';
+
+const { MANETModule } = NativeModules;
+const manetEmitter = new NativeEventEmitter(MANETModule);
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -68,6 +76,77 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
+  const dispatch = useDispatch();
+
+  React.useEffect(() => {
+    let watchId: number | null = null;
+    const requestLocationPermission = async () => {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          return;
+        }
+      }
+      
+      Geolocation.getCurrentPosition(
+        (position) => {
+          dispatch(setCurrentLocation({ lat: position.coords.latitude, lng: position.coords.longitude }));
+        },
+        (error) => console.log('AppNav GPS Init error:', error),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      );
+
+      watchId = Geolocation.watchPosition(
+        (position) => {
+          dispatch(setCurrentLocation({ lat: position.coords.latitude, lng: position.coords.longitude }));
+        },
+        (error) => console.log('AppNav GPS Watch error:', error),
+        { enableHighAccuracy: true, distanceFilter: 10 }
+      );
+    };
+
+    // Initialize SQLite for offline fallback
+    LocalDB.initDB().catch(err => console.warn('LocalDB init failed:', err));
+
+    requestLocationPermission().then(() => {
+      // Start active BLE listening after permissions are granted
+      if (MANETModule && MANETModule.startListening) {
+        MANETModule.startListening()
+          .then(() => console.log('MANET Listening Started'))
+          .catch((e: any) => console.warn('Failed to start MANET listening', e));
+      }
+    });
+
+    const meshListener = manetEmitter.addListener('onMeshSOSReceived', (packetJson: string) => {
+      try {
+        const packet = JSON.parse(packetJson);
+        const locationBase64 = packet.locationEnc?.ciphertext || '';
+        let latLngStr = 'Unknown Location';
+        if (locationBase64) {
+           const buffer = Buffer.from(locationBase64, 'base64');
+           latLngStr = buffer.toString('utf8');
+        } else if (packet.lat && packet.lng) {
+           latLngStr = `${packet.lat}, ${packet.lng}`;
+        }
+
+        Alert.alert(
+          '🚨 EMERGENCY SOS RECEIVED 🚨',
+          `Device ID: ${packet.userId?.substring(0, 8)}... is requesting SOS.\n\nCoordinates: ${latLngStr}\n\nThis alert was relayed via Bluetooth Mesh.`,
+          [{ text: 'Dismiss' }]
+        );
+      } catch (e) {
+        console.warn('Failed to parse incoming mesh SOS', e);
+      }
+    });
+
+    return () => {
+      if (watchId !== null) Geolocation.clearWatch(watchId);
+      meshListener.remove();
+    };
+  }, [dispatch]);
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>

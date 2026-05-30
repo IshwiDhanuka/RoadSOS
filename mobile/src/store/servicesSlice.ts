@@ -27,15 +27,22 @@ export const searchServices = createAsyncThunk(
   async ({ q, lat, lng, category }: { q: string; lat: number; lng: number; category?: string }) => {
     try {
       const services = await apiSearchServices(q, lat, lng, category);
-      return services;
+      if (services && services.length > 0) {
+        return services;
+      }
+      // If the API returns empty, try falling back to local
+      const offlineServices = await LocalDB.searchServices(q, lat, lng, category);
+      return offlineServices.length > 0 ? offlineServices : [];
     } catch (err) {
-      // Return empty array on failure for now to avoid crash
-      return [];
+      // Return offline fallback on failure
+      const offlineServices = await LocalDB.searchServices(q, lat, lng, category);
+      return offlineServices;
     }
   }
 );
 
 interface ServicesState {
+  currentLocation: { lat: number; lng: number } | null;
   nearby: ServiceRecord[];
   searchResults: ServiceRecord[];
   source: 'live' | 'cache' | 'offline';
@@ -44,6 +51,7 @@ interface ServicesState {
 }
 
 const initialState: ServicesState = {
+  currentLocation: null,
   nearby: [],
   searchResults: [],
   source: 'live',
@@ -55,6 +63,9 @@ const servicesSlice = createSlice({
   name: 'services',
   initialState,
   reducers: {
+    setCurrentLocation: (state, action: PayloadAction<{lat: number, lng: number}>) => {
+      state.currentLocation = action.payload;
+    },
     clearServices: (state) => {
       state.nearby = [];
       state.searchResults = [];
@@ -85,5 +96,5 @@ const servicesSlice = createSlice({
   }
 });
 
-export const { clearServices } = servicesSlice.actions;
+export const { clearServices, setCurrentLocation } = servicesSlice.actions;
 export default servicesSlice.reducer;

@@ -3,7 +3,7 @@ import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Platform
 import { useDispatch, useSelector } from 'react-redux';
 import { searchServices } from '../store/servicesSlice';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Geolocation from 'react-native-geolocation-service';
+import { useNavigation } from '@react-navigation/native';
 
 const CHIPS = [
   { label: 'Hospital', icon: 'medical' },
@@ -16,21 +16,19 @@ const SearchScreen = () => {
   const [query, setQuery] = useState('');
   const [activeChip, setActiveChip] = useState('');
   const dispatch = useDispatch();
+  const navigation = useNavigation<any>();
   const searchResults = useSelector((state: any) => state.services?.searchResults || []);
+  const currentLocation = useSelector((state: any) => state.services?.currentLocation);
 
   const handleSearch = (text: string, category?: string) => {
     setQuery(text);
-    Geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        dispatch(searchServices({ q: text, lat: latitude, lng: longitude, category }) as any);
-      },
-      (error) => {
-        // Fallback to default if location fails
-        dispatch(searchServices({ q: text, lat: 28.6139, lng: 77.209, category }) as any);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
+    if (currentLocation) {
+      const { lat: latitude, lng: longitude } = currentLocation;
+      dispatch(searchServices({ q: text, lat: latitude, lng: longitude, category }) as any);
+    } else {
+      // Fallback to default if location isn't ready
+      dispatch(searchServices({ q: text, lat: 28.6139, lng: 77.209, category }) as any);
+    }
   };
 
   const handleChipPress = (chip: string) => {
@@ -53,6 +51,8 @@ const SearchScreen = () => {
           placeholderTextColor="#8b8b99"
           value={query}
           onChangeText={(text) => handleSearch(text, activeChip)}
+          onSubmitEditing={() => navigation.navigate('Map')}
+          returnKeyType="search"
         />
       </View>
 
@@ -71,22 +71,29 @@ const SearchScreen = () => {
       </View>
       
       <FlatList
-        data={searchResults}
+        data={[...searchResults].sort((a, b) => {
+          const distA = a.distanceMetres || a.distanceMeters || 0;
+          const distB = b.distanceMetres || b.distanceMeters || 0;
+          return distA - distB;
+        })}
         keyExtractor={(item: any) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={({ item }) => (
-          <View style={styles.resultItem}>
+          <TouchableOpacity style={styles.resultItem} activeOpacity={0.7} onPress={() => navigation.navigate('Map')}>
             <View style={styles.resultIconContainer}>
               <Icon name="location" size={24} color="#e67e22" />
             </View>
             <View style={styles.resultDetails}>
               <Text style={styles.resultTitle}>{item.name}</Text>
               <Text style={styles.resultSubtitle}>{item.category || item.type}</Text>
-              {item.distanceMeters && (
-                <Text style={styles.resultDistance}>{Math.round(item.distanceMeters)}m away</Text>
+              {item.address && (
+                <Text style={styles.resultAddress} numberOfLines={2}>{item.address}</Text>
               )}
+              {(item.distanceMetres || item.distanceMeters) ? (
+                <Text style={styles.resultDistance}>{Math.round(item.distanceMetres || item.distanceMeters)}m away</Text>
+              ) : null}
             </View>
-          </View>
+          </TouchableOpacity>
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -192,9 +199,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   resultSubtitle: {
-    color: '#e67e22',
-    fontSize: 14,
-    fontWeight: '500',
+    color: '#8b8b99',
+    fontSize: 12,
+    textTransform: 'capitalize',
+    marginBottom: 4,
+  },
+  resultAddress: {
+    color: '#a0a0b0',
+    fontSize: 12,
+    marginBottom: 6,
   },
   resultDistance: {
     color: '#8b8b99',
