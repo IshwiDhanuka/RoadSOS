@@ -5,7 +5,6 @@ import com.roadsos.manet.crypto.SOSPacketSigner
 import com.roadsos.manet.crypto.SOSPacketVerifier
 import com.roadsos.manet.crypto.RelayHop
 import java.security.KeyPair
-import org.apache.commons.codec.binary.Base64
 
 object HopChainManager {
 

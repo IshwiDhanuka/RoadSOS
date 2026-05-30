@@ -2,7 +2,7 @@ package com.roadsos.manet.crypto
 
 import java.security.PrivateKey
 import java.security.Signature
-import org.apache.commons.codec.binary.Base64
+import android.util.Base64
 
 object SOSPacketSigner {
 
@@ -22,6 +22,6 @@ object SOSPacketSigner {
         signature.initSign(privateKey)
         signature.update(payload.toByteArray(Charsets.UTF_8))
 
-        return Base64.encodeBase64String(signature.sign())
+        return Base64.encodeToString(signature.sign(), Base64.NO_WRAP)
     }
 }

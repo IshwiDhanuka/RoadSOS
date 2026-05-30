@@ -9,7 +9,6 @@ import com.roadsos.manet.crypto.SOSPacketVerifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.apache.commons.codec.binary.Base64
 import java.net.HttpURLConnection
 import java.net.URL
 

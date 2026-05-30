@@ -4,7 +4,7 @@ import java.security.KeyFactory
 import java.security.PublicKey
 import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
-import org.apache.commons.codec.binary.Base64
+import android.util.Base64
 
 object SOSPacketVerifier {
 
@@ -22,7 +22,7 @@ object SOSPacketVerifier {
         return try {
             val payload = "$eventId|$timestamp|$nonce|$locationEnc"
 
-            val keyBytes = Base64.decodeBase64(publicKeyBase64)
+            val keyBytes = Base64.decode(publicKeyBase64, Base64.DEFAULT)
             val keySpec = X509EncodedKeySpec(keyBytes)
             val publicKey: PublicKey = KeyFactory.getInstance("EC").generatePublic(keySpec)
 
@@ -30,7 +30,7 @@ object SOSPacketVerifier {
             signature.initVerify(publicKey)
             signature.update(payload.toByteArray(Charsets.UTF_8))
 
-            val sigBytes = Base64.decodeBase64(signatureBase64)
+            val sigBytes = Base64.decode(signatureBase64, Base64.DEFAULT)
             signature.verify(sigBytes)
 
         } catch (e: Exception) {
