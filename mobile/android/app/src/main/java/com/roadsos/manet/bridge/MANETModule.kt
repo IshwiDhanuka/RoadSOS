@@ -40,22 +40,20 @@ class MANETModule(
                 android.provider.Settings.Secure.ANDROID_ID
             )
 
-            // If public key is not provided or invalid, skip encryption for testing
-            val signature = try {
-                val keyBytes = Base64.decode(serverPublicKeyBase64, Base64.DEFAULT)
-                val serverPublicKey = KeyFactory.getInstance("RSA")
-                    .generatePublic(X509EncodedKeySpec(keyBytes))
-                val encryptedLocation = LocationEncryptor.encrypt(lat, lng, serverPublicKey)
-                SOSPacketSigner.sign(eventId, timestamp, nonce, encryptedLocation.ciphertext, keyPair.private)
-            } catch(e: Exception) {
-                // Fallback dummy signature for demo
-                "dummy_signature"
-            }
+            val keyBytes = Base64.decode(serverPublicKeyBase64, Base64.DEFAULT)
+            val serverPublicKey = KeyFactory.getInstance("RSA")
+                .generatePublic(X509EncodedKeySpec(keyBytes))
+            
+            // AES-GCM Encrypt Location and RSA wrap AES Key
+            val encryptedLocation = LocationEncryptor.encrypt(lat, lng, serverPublicKey)
+            
+            // ECDSA P-256 Sign
+            val signature = SOSPacketSigner.sign(eventId, timestamp, nonce, encryptedLocation.ciphertext, keyPair.private)
 
             val packet = SOSPacket(
                 eventId = eventId,
                 userId = userId,
-                locationEnc = com.roadsos.manet.crypto.EncryptedLocation("mock_cipher", "mock_key", "mock_iv", "mock_tag"),
+                locationEnc = encryptedLocation,
                 timestamp = timestamp,
                 nonce = nonce,
                 signature = signature

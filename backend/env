@@ -1,0 +1,21 @@
+# Environment
+NODE_ENV=development
+PORT=3000
+
+# Firebase Admin SDK
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----\n"
+
+# Upstash Redis
+UPSTASH_REDIS_REST_URL=https://your-region.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-token
+
+# Google Places API
+GOOGLE_PLACES_API_KEY=AIzaSyCnKM7e6mih_4SLSuW_ShINf_klaPgL1KA
+
+# RSA-2048 Private Key (base64-encoded PEM) for SOS packet decryption
+RSA_PRIVATE_KEY_B64=base64-of-your-rsa-private-key-pem
+
+# CORS (comma-separated origins, or * for all)
+CORS_ORIGIN=*

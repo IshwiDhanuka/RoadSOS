@@ -20,7 +20,7 @@
       android:supportsRtl="true">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDummyKeyForRoadSoSAppTestingOnly" />
+            android:value="AIzaSyCnKM7e6mih_4SLSuW_ShINf_klaPgL1KA" />
             
       <activity
         android:name=".MainActivity"
