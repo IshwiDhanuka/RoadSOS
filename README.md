@@ -1,9 +1,9 @@
-# 🚨 RoadSOS
+# RoadSOS
 **Hackathon Final Submission**
 
 RoadSOS is a decentralized, mobile-first emergency response application designed for areas with zero cellular connectivity. By utilizing a Bluetooth Mobile Ad-Hoc Network (MANET), RoadSOS ensures that panic signals can hop securely from device to device until they reach the internet. 
 
-## 🏆 Core Features
+## Core Features
 
 - **Offline MANET Mesh:** Built with a custom native Android TurboModule, our app leverages BLE GATT servers to broadcast and relay SOS packets completely offline.
 - **Dynamic Services Map:** Seamlessly plots nearby hospitals, police stations, towing services, and ambulances on a Google Map interface using our custom API.
@@ -11,7 +11,7 @@ RoadSOS is a decentralized, mobile-first emergency response application designed
 - **Interactive First Aid Guide:** Built-in offline accordion guides for CPR (with tempo cues), severe bleeding, and spinal injuries.
 - **Premium UX Design:** Overhauled with beautiful dark-mode theming and responsive interactions for stressful situations.
 
-## 📁 Repository Structure
+## Repository Structure
 
 - `/mobile` - The React Native front-end application built for Android. Contains our custom Kotlin BLE bridge (`MANETModule`).
 - `/frontend` - Contains Web/Frontend assets and the initial `apiService` logic.
@@ -19,7 +19,7 @@ RoadSOS is a decentralized, mobile-first emergency response application designed
 - `HLD.txt` - The High Level Design specification guiding our Hackathon architectural choices.
 - `RoadSOS-App.apk` - The compiled, fully-functional Android App bundle you can install right now.
 
-## 🚀 Usage & Setup Instructions
+## Usage & Setup Instructions
 
 ### 1. The Mobile App (Android)
 The final production-grade Debug APK is located at `mobile/android/app/build/outputs/apk/debug/app-debug.apk`.
